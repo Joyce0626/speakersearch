@@ -565,11 +565,8 @@
 
                 console.log(`成功載入 ${speakers.length} 位講師`);
 
-                // 更新狀態顯示
-                statusInfo.innerHTML = `
-                    共 ${speakers.length} 位講師
-                    ${lastUpdated ? `<br><small>更新時間: ${new Date(lastUpdated).toLocaleString('zh-TW')}</small>` : ''}
-                `;
+                // 載入完成，隱藏狀態資訊
+                statusInfo.style.display = 'none';
 
                 // 啟用搜尋並顯示講師
                 searchInput.disabled = false;
@@ -590,7 +587,7 @@
                     載入失敗: ${error.message}<br>
                     <small>請檢查 Web App 是否正確部署</small>
                 `;
-                statusInfo.textContent = '載入失敗';
+                statusInfo.style.display = 'none';
             }
         }
 
