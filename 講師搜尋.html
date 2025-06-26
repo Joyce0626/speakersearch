@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扶輪社講師資料庫</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .top-section {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 40px 20px 60px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .network-logo {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            opacity: 0.3;
+        }
+
+        .bottom-section {
+            background: #f8f9fa;
+            padding: 40px 20px;
+            min-height: 60vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .status-info {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            margin-bottom: 0;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            outline: none;
+            background: white;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .speakers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .speaker-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e0e6ed;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .speaker-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            border-color: #c8d3e0;
+        }
+
+        .speaker-photo {
+            width: 100%;
+            height: 210px;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #888;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .speaker-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .speaker-info {
+            padding: 20px;
+        }
+
+        .speaker-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .topics-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
+            margin-bottom: 12px;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .topics-label::before,
+        .topics-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .topics-label::before {
+            margin-right: 10px;
+        }
+
+        .topics-label::after {
+            margin-left: 10px;
+        }
+
+        .topics {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .topic {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        /* 載入和錯誤狀態 */
+        .loading-container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2a5298;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 60px 20px;
+            color: #d32f2f;
+        }
+
+        .error-container h3 {
+            margin-bottom: 10px;
+        }
+
+        .retry-btn {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .retry-btn:hover {
+            background: #1e3c72;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #666;
+            font-size: 1.2rem;
+            margin-top: 50px;
+            opacity: 0.8;
+        }
+
+        /* 彈出視窗樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 0;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalAppear 0.3s ease;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .modal-photo {
+            width: 100%;
+            height: 360px;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: #888;
+            border-radius: 20px 20px 0 0;
+            overflow: hidden;
+        }
+
+        .modal-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-info {
+            padding: 30px;
+        }
+
+        .modal-name {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .modal-topics-label {
+            font-size: 1.1rem;
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-topics-label::before,
+        .modal-topics-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .modal-topics-label::before {
+            margin-right: 15px;
+        }
+
+        .modal-topics-label::after {
+            margin-left: 15px;
+        }
+
+        .modal-topics {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-topic {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close:hover {
+            background: #f44336;
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .speakers-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .modal-content {
+                width: 95%;
+                max-width: none;
+            }
+            
+            .modal-photo {
+                height: 280px;
+            }
+            
+            .modal-name {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-section">
+        <!-- 網絡logo SVG -->
+        <svg class="network-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <style>
+                    .network-node { fill: rgba(255,255,255,0.6); }
+                    .network-line { stroke: rgba(255,255,255,0.4); stroke-width: 1; }
+                </style>
+            </defs>
+            <!-- 連接線 -->
+            <line class="network-line" x1="20" y1="20" x2="50" y2="30"/>
+            <line class="network-line" x1="20" y1="20" x2="30" y2="50"/>
+            <line class="network-line" x1="50" y1="30" x2="80" y2="25"/>
+            <line class="network-line" x1="50" y1="30" x2="70" y2="60"/>
+            <line class="network-line" x1="50" y1="30" x2="30" y2="50"/>
+            <line class="network-line" x1="80" y1="25" x2="70" y2="60"/>
+            <line class="network-line" x1="30" y1="50" x2="70" y2="60"/>
+            <line class="network-line" x1="30" y1="50" x2="25" y2="80"/>
+            <line class="network-line" x1="70" y1="60" x2="85" y2="75"/>
+            <line class="network-line" x1="25" y1="80" x2="85" y2="75"/>
+            
+            <!-- 節點 -->
+            <circle class="network-node" cx="20" cy="20" r="4"/>
+            <circle class="network-node" cx="50" cy="30" r="5"/>
+            <circle class="network-node" cx="80" cy="25" r="4"/>
+            <circle class="network-node" cx="30" cy="50" r="4"/>
+            <circle class="network-node" cx="70" cy="60" r="4"/>
+            <circle class="network-node" cx="25" cy="80" r="3"/>
+            <circle class="network-node" cx="85" cy="75" r="3"/>
+        </svg>
+
+        <div class="container">
+            <div class="header">
+                <h1>扶輪社講師資料庫</h1>
+                <p>專業講師，豐富主題，為您的活動增添價值</p>
+                <div class="status-info" id="statusInfo">
+                    正在載入講師資料...
+                </div>
+            </div>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" placeholder="搜尋講師姓名或演講主題..." id="searchInput" disabled>
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-section">
+        <div class="container">
+            <!-- 載入中狀態 -->
+            <div class="loading-container" id="loadingContainer">
+                <div class="loading-spinner"></div>
+                <p>正在載入講師資料，請稍候...</p>
+            </div>
+
+            <!-- 錯誤狀態 -->
+            <div class="error-container hidden" id="errorContainer">
+                <h3>載入失敗</h3>
+                <p id="errorMessage">無法載入講師資料，請檢查網路連線</p>
+                <button class="retry-btn" onclick="loadSpeakers()">重新載入</button>
+            </div>
+
+            <!-- 講師網格 -->
+            <div class="speakers-grid hidden" id="speakersGrid">
+                <!-- 講師卡片將在這裡動態生成 -->
+            </div>
+
+            <!-- 無結果提示 -->
+            <div class="no-results hidden" id="noResults">
+                找不到符合條件的講師，請嘗試其他關鍵字
+            </div>
+        </div>
+    </div>
+
+    <!-- 彈出視窗 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-photo" id="modalPhoto">
+                📷
+            </div>
+            <div class="modal-info">
+                <div class="modal-name" id="modalName"></div>
+                <div class="modal-topics" id="modalTopics"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全域變數
+        let speakers = [];
+        let filteredSpeakers = [];
+        let lastUpdated = '';
+
+        // 您的 JSON 檔案連結
+        const JSON_URL = 'https://drive.google.com/uc?id=1SJjI8CGJszyfbwci0mlQ-wLI7DBNvUDk';
+
+        // 載入講師資料
+        async function loadSpeakers() {
+            const loadingContainer = document.getElementById('loadingContainer');
+            const errorContainer = document.getElementById('errorContainer');
+            const speakersGrid = document.getElementById('speakersGrid');
+            const statusInfo = document.getElementById('statusInfo');
+            const searchInput = document.getElementById('searchInput');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // 顯示載入狀態
+            loadingContainer.classList.remove('hidden');
+            errorContainer.classList.add('hidden');
+            speakersGrid.classList.add('hidden');
+            searchInput.disabled = true;
+            statusInfo.textContent = '正在載入講師資料...';
+
+            try {
+                console.log('開始載入講師資料...');
+                const response = await fetch(JSON_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP 錯誤: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('載入的資料:', data);
+
+                if (!data.speakers || !Array.isArray(data.speakers)) {
+                    throw new Error('JSON 資料格式不正確');
+                }
+
+                // 更新資料
+                speakers = data.speakers;
+                filteredSpeakers = [...speakers];
+                lastUpdated = data.lastUpdated || '';
+
+                console.log(`成功載入 ${speakers.length} 位講師`);
+
+                // 更新狀態顯示
+                statusInfo.innerHTML = `
+                    共 ${speakers.length} 位講師
+                    ${lastUpdated ? `<br><small>更新時間: ${new Date(lastUpdated).toLocaleString('zh-TW')}</small>` : ''}
+                `;
+
+                // 啟用搜尋並顯示講師
+                searchInput.disabled = false;
+                searchInput.placeholder = "搜尋講師姓名或演講主題...";
+                
+                loadingContainer.classList.add('hidden');
+                speakersGrid.classList.remove('hidden');
+                
+                renderSpeakers(filteredSpeakers);
+
+            } catch (error) {
+                console.error('載入講師資料失敗:', error);
+                
+                // 顯示錯誤狀態
+                loadingContainer.classList.add('hidden');
+                errorContainer.classList.remove('hidden');
+                errorMessage.textContent = `載入失敗: ${error.message}`;
+                statusInfo.textContent = '載入失敗';
+            }
+        }
+
+        // 生成講師卡片
+        function renderSpeakers(speakerList) {
+            const grid = document.getElementById('speakersGrid');
+            const noResults = document.getElementById('noResults');
+            
+            if (speakerList.length === 0) {
+                grid.innerHTML = '';
+                grid.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                return;
+            }
+            
+            noResults.classList.add('hidden');
+            grid.classList.remove('hidden');
+            
+            grid.innerHTML = speakerList.map(speaker => `
+                <div class="speaker-card" onclick="openModal(${speaker.id})">
+                    <div class="speaker-photo">
+                        ${speaker.photo ? `<img src="${speaker.photo}" alt="${speaker.name}" onerror="this.parentElement.innerHTML='📷'">` : '📷'}
+                    </div>
+                    <div class="speaker-info">
+                        <div class="speaker-name">${speaker.name}</div>
+                        <div class="topics-label">可演講主題</div>
+                        <div class="topics">
+                            ${speaker.topics.map(topic => `<div class="topic">${topic}</div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 搜尋功能
+        function filterSpeakers(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            
+            if (!term) {
+                filteredSpeakers = [...speakers];
+            } else {
+                filteredSpeakers = speakers.filter(speaker => 
+                    speaker.name.toLowerCase().includes(term) ||
+                    speaker.topics.some(topic => topic.toLowerCase().includes(term))
+                );
+            }
+            
+            renderSpeakers(filteredSpeakers);
+        }
+
+        // 開啟彈出視窗
+        function openModal(speakerId) {
+            const speaker = speakers.find(s => s.id === speakerId);
+            if (!speaker) return;
+            
+            const modal = document.getElementById('modal');
+            const modalPhoto = document.getElementById('modalPhoto');
+            const modalName = document.getElementById('modalName');
+            const modalTopics = document.getElementById('modalTopics');
+            
+            modalPhoto.innerHTML = speaker.photo ? `<img src="${speaker.photo}" alt="${speaker.name}" onerror="this.parentElement.innerHTML='📷'">` : '📷';
+            modalName.textContent = speaker.name;
+            modalTopics.innerHTML = `
+                <div class="modal-topics-label">可演講主題</div>
+                ${speaker.topics.map(topic => `<div class="modal-topic">${topic}</div>`).join('')}
+            `;
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 關閉彈出視窗
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // 事件監聽器
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            filterSpeakers(e.target.value);
+        });
+
+        document.querySelector('.close').addEventListener('click', closeModal);
+
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // 頁面載入完成後自動載入講師資料
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('頁面載入完成，開始載入講師資料');
+            loadSpeakers();
+        });
+    </script>
+</body>
+</html>
