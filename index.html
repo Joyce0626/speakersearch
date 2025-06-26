@@ -519,8 +519,8 @@
         let filteredSpeakers = [];
         let lastUpdated = '';
 
-        // 您的 JSON 檔案連結
-        const JSON_URL = 'https://drive.google.com/uc?id=1SJjI8CGJszyfbwci0mlQ-wLI7DBNvUDk';
+        // 您的 JSON 檔案 ID
+        const JSON_FILE_ID = '1SJjI8CGJszyfbwci0mlQ-wLI7DBNvUDk';
 
         // 載入講師資料
         async function loadSpeakers() {
@@ -540,13 +540,40 @@
 
             try {
                 console.log('開始載入講師資料...');
-                const response = await fetch(JSON_URL);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP 錯誤: ${response.status}`);
-                }
+                // 使用 JSONP 方式載入，避免 CORS 問題
+                const jsonpCallback = 'jsonpCallback_' + Date.now();
+                const script = document.createElement('script');
+                
+                // 創建 Promise 來處理 JSONP 回調
+                const data = await new Promise((resolve, reject) => {
+                    // 設置全域回調函數
+                    window[jsonpCallback] = function(data) {
+                        resolve(data);
+                        // 清理
+                        document.head.removeChild(script);
+                        delete window[jsonpCallback];
+                    };
 
-                const data = await response.json();
+                    // 設置超時
+                    const timeout = setTimeout(() => {
+                        reject(new Error('請求超時'));
+                        document.head.removeChild(script);
+                        delete window[jsonpCallback];
+                    }, 10000);
+
+                    script.onerror = () => {
+                        clearTimeout(timeout);
+                        reject(new Error('無法載入 JSON 檔案'));
+                        delete window[jsonpCallback];
+                    };
+
+                    // 使用 Google Apps Script 來提供 JSONP
+                    // 這需要您建立一個 Google Apps Script Web App
+                    script.src = `https://script.google.com/macros/s/AKfycbwLQvKH8RfJcxGOyZR4-E8K5rXF6YE8QJsVQ7_M2A/exec?fileId=${JSON_FILE_ID}&callback=${jsonpCallback}`;
+                    document.head.appendChild(script);
+                });
+
                 console.log('載入的資料:', data);
 
                 if (!data.speakers || !Array.isArray(data.speakers)) {
@@ -578,11 +605,54 @@
             } catch (error) {
                 console.error('載入講師資料失敗:', error);
                 
-                // 顯示錯誤狀態
-                loadingContainer.classList.add('hidden');
-                errorContainer.classList.remove('hidden');
-                errorMessage.textContent = `載入失敗: ${error.message}`;
-                statusInfo.textContent = '載入失敗';
+                // 如果 JSONP 方法失敗，嘗試使用代理服務
+                try {
+                    console.log('嘗試使用代理服務載入...');
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://drive.google.com/uc?id=' + JSON_FILE_ID)}`;
+                    const response = await fetch(proxyUrl);
+                    const result = await response.json();
+                    const data = JSON.parse(result.contents);
+                    
+                    if (!data.speakers || !Array.isArray(data.speakers)) {
+                        throw new Error('JSON 資料格式不正確');
+                    }
+
+                    // 更新資料
+                    speakers = data.speakers;
+                    filteredSpeakers = [...speakers];
+                    lastUpdated = data.lastUpdated || '';
+
+                    console.log(`使用代理服務成功載入 ${speakers.length} 位講師`);
+
+                    // 更新狀態顯示
+                    statusInfo.innerHTML = `
+                        共 ${speakers.length} 位講師
+                        ${lastUpdated ? `<br><small>更新時間: ${new Date(lastUpdated).toLocaleString('zh-TW')}</small>` : ''}
+                    `;
+
+                    // 啟用搜尋並顯示講師
+                    searchInput.disabled = false;
+                    searchInput.placeholder = "搜尋講師姓名或演講主題...";
+                    
+                    loadingContainer.classList.add('hidden');
+                    speakersGrid.classList.remove('hidden');
+                    
+                    renderSpeakers(filteredSpeakers);
+
+                } catch (proxyError) {
+                    console.error('代理服務也失敗:', proxyError);
+                    
+                    // 顯示錯誤狀態
+                    loadingContainer.classList.add('hidden');
+                    errorContainer.classList.remove('hidden');
+                    errorMessage.innerHTML = `
+                        載入失敗: ${error.message}<br>
+                        <small>建議解決方案：</small><br>
+                        <small>1. 檢查 JSON 檔案是否設為公開</small><br>
+                        <small>2. 或將 JSON 內容直接貼到網頁中</small>
+                    `;
+                    statusInfo.textContent = '載入失敗';
+                }
             }
         }
 
