@@ -155,8 +155,16 @@
             font-size: 1.4rem;
             font-weight: bold;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-align: center;
+        }
+
+        .speaker-name-en {
+            font-size: 1rem;
+            color: #666;
+            text-align: center;
+            margin-bottom: 10px;
+            font-style: italic;
         }
 
         .topics-label {
@@ -203,7 +211,6 @@
             box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
 
-        /* 載入和錯誤狀態 */
         .loading-container {
             text-align: center;
             padding: 60px 20px;
@@ -257,7 +264,6 @@
             opacity: 0.8;
         }
 
-        /* 彈出視窗樣式 */
         .modal {
             display: none;
             position: fixed;
@@ -322,8 +328,16 @@
             font-size: 2rem;
             font-weight: bold;
             color: #333;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
             text-align: center;
+        }
+
+        .modal-name-en {
+            font-size: 1.2rem;
+            color: #666;
+            text-align: center;
+            margin-bottom: 15px;
+            font-style: italic;
         }
 
         .modal-topics-label {
@@ -386,6 +400,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
+            z-index: 10;
         }
 
         .close:hover {
@@ -424,7 +439,6 @@
 </head>
 <body>
     <div class="top-section">
-        <!-- 網絡logo SVG -->
         <svg class="network-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <style>
@@ -432,7 +446,6 @@
                     .network-line { stroke: rgba(255,255,255,0.4); stroke-width: 1; }
                 </style>
             </defs>
-            <!-- 連接線 -->
             <line class="network-line" x1="20" y1="20" x2="50" y2="30"/>
             <line class="network-line" x1="20" y1="20" x2="30" y2="50"/>
             <line class="network-line" x1="50" y1="30" x2="80" y2="25"/>
@@ -444,7 +457,6 @@
             <line class="network-line" x1="70" y1="60" x2="85" y2="75"/>
             <line class="network-line" x1="25" y1="80" x2="85" y2="75"/>
             
-            <!-- 節點 -->
             <circle class="network-node" cx="20" cy="20" r="4"/>
             <circle class="network-node" cx="50" cy="30" r="5"/>
             <circle class="network-node" cx="80" cy="25" r="4"/>
@@ -465,7 +477,7 @@
 
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" class="search-input" placeholder="搜尋講師姓名或演講主題..." id="searchInput" disabled>
+                    <input type="text" class="search-input" placeholder="搜尋講師中英文姓名、主題分類代號或演講主題..." id="searchInput" disabled>
                     <span class="search-icon">🔍</span>
                 </div>
             </div>
@@ -474,55 +486,65 @@
 
     <div class="bottom-section">
         <div class="container">
-            <!-- 載入中狀態 -->
             <div class="loading-container" id="loadingContainer">
                 <div class="loading-spinner"></div>
-                <p>正在載入講師資料，請稍候...</p>
+                <p>正在載入講師資料,請稍候...</p>
             </div>
 
-            <!-- 錯誤狀態 -->
             <div class="error-container hidden" id="errorContainer">
                 <h3>載入失敗</h3>
-                <p id="errorMessage">無法載入講師資料，請檢查網路連線</p>
+                <p id="errorMessage">無法載入講師資料,請檢查網路連線</p>
                 <button class="retry-btn" onclick="loadSpeakers()">重新載入</button>
             </div>
 
-            <!-- 講師網格 -->
-            <div class="speakers-grid hidden" id="speakersGrid">
-                <!-- 講師卡片將在這裡動態生成 -->
-            </div>
+            <div class="speakers-grid hidden" id="speakersGrid"></div>
 
-            <!-- 無結果提示 -->
             <div class="no-results hidden" id="noResults">
-                找不到符合條件的講師，請嘗試其他關鍵字
+                找不到符合條件的講師,請嘗試其他關鍵字
             </div>
         </div>
     </div>
 
-    <!-- 彈出視窗 -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <div class="modal-photo" id="modalPhoto">
-                📷
-            </div>
+            <div class="modal-photo" id="modalPhoto">📷</div>
             <div class="modal-info">
                 <div class="modal-name" id="modalName"></div>
+                <div class="modal-name-en" id="modalNameEn"></div>
                 <div class="modal-topics" id="modalTopics"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // 全域變數
         let speakers = [];
         let filteredSpeakers = [];
         let lastUpdated = '';
 
-        // 您的 Web App 網址
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwfOKEokqDLf6cWsi1ZvczRrdL9OWqr3xjgezD_itgG1sVAl8keLoPKt_yhUdC5b3I8/exec';
 
-        // 載入講師資料
+        // 解析演講主題分類格式 "T：教育與成長" -> {code: "T", name: "教育與成長"}
+        function parseCategory(categoryStr) {
+            if (!categoryStr) return { code: '', name: '' };
+            const parts = categoryStr.split('：');
+            return {
+                code: parts[0] || '',
+                name: parts[1] || ''
+            };
+        }
+
+        // 格式化顯示主題 "T：教育與成長|寵物生命教育" -> "T_寵物生命教育"
+        function formatTopic(topicStr) {
+            if (!topicStr) return '';
+            const parts = topicStr.split('|');
+            if (parts.length < 2) return topicStr;
+            
+            const category = parseCategory(parts[0]);
+            const topic = parts[1];
+            return `${category.code}_${topic}`;
+        }
+
         async function loadSpeakers() {
             const loadingContainer = document.getElementById('loadingContainer');
             const errorContainer = document.getElementById('errorContainer');
@@ -531,7 +553,6 @@
             const searchInput = document.getElementById('searchInput');
             const errorMessage = document.getElementById('errorMessage');
 
-            // 顯示載入狀態
             loadingContainer.classList.remove('hidden');
             errorContainer.classList.add('hidden');
             speakersGrid.classList.add('hidden');
@@ -549,7 +570,6 @@
                 const data = await response.json();
                 console.log('載入的資料:', data);
 
-                // 檢查是否有錯誤
                 if (data.error) {
                     throw new Error(data.message || '載入失敗');
                 }
@@ -558,19 +578,15 @@
                     throw new Error('JSON 資料格式不正確');
                 }
 
-                // 更新資料
                 speakers = data.speakers;
                 filteredSpeakers = [...speakers];
                 lastUpdated = data.lastUpdated || '';
 
                 console.log(`成功載入 ${speakers.length} 位講師`);
 
-                // 載入完成，隱藏狀態資訊
                 statusInfo.style.display = 'none';
-
-                // 啟用搜尋並顯示講師
                 searchInput.disabled = false;
-                searchInput.placeholder = "搜尋講師姓名或演講主題...";
+                searchInput.placeholder = "搜尋講師中英文姓名、主題分類代號或演講主題...";
                 
                 loadingContainer.classList.add('hidden');
                 speakersGrid.classList.remove('hidden');
@@ -580,7 +596,6 @@
             } catch (error) {
                 console.error('載入講師資料失敗:', error);
                 
-                // 顯示錯誤狀態
                 loadingContainer.classList.add('hidden');
                 errorContainer.classList.remove('hidden');
                 errorMessage.innerHTML = `
@@ -591,7 +606,6 @@
             }
         }
 
-        // 生成講師卡片
         function renderSpeakers(speakerList) {
             const grid = document.getElementById('speakersGrid');
             const noResults = document.getElementById('noResults');
@@ -613,32 +627,57 @@
                     </div>
                     <div class="speaker-info">
                         <div class="speaker-name">${speaker.name}</div>
+                        ${speaker.nameEn ? `<div class="speaker-name-en">${speaker.nameEn}</div>` : ''}
                         <div class="topics-label">可演講主題</div>
                         <div class="topics">
-                            ${speaker.topics.map(topic => `<div class="topic">${topic}</div>`).join('')}
+                            ${speaker.topics.map(topic => `<div class="topic">${formatTopic(topic)}</div>`).join('')}
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 搜尋功能
         function filterSpeakers(searchTerm) {
             const term = searchTerm.toLowerCase().trim();
             
             if (!term) {
                 filteredSpeakers = [...speakers];
             } else {
-                filteredSpeakers = speakers.filter(speaker => 
-                    speaker.name.toLowerCase().includes(term) ||
-                    speaker.topics.some(topic => topic.toLowerCase().includes(term))
-                );
+                filteredSpeakers = speakers.filter(speaker => {
+                    // 搜尋中文姓名
+                    if (speaker.name.toLowerCase().includes(term)) return true;
+                    
+                    // 搜尋英文姓名
+                    if (speaker.nameEn && speaker.nameEn.toLowerCase().includes(term)) return true;
+                    
+                    // 搜尋主題 (包含分類代號、分類名稱和主題名稱)
+                    return speaker.topics.some(topic => {
+                        const topicLower = topic.toLowerCase();
+                        // 搜尋完整字串
+                        if (topicLower.includes(term)) return true;
+                        
+                        // 解析並搜尋分類代號
+                        const parts = topic.split('|');
+                        if (parts.length >= 2) {
+                            const category = parseCategory(parts[0]);
+                            const topicName = parts[1];
+                            
+                            // 搜尋分類代號
+                            if (category.code.toLowerCase().includes(term)) return true;
+                            // 搜尋分類名稱
+                            if (category.name.toLowerCase().includes(term)) return true;
+                            // 搜尋主題名稱
+                            if (topicName.toLowerCase().includes(term)) return true;
+                        }
+                        
+                        return false;
+                    });
+                });
             }
             
             renderSpeakers(filteredSpeakers);
         }
 
-        // 開啟彈出視窗
         function openModal(speakerId) {
             const speaker = speakers.find(s => s.id === speakerId);
             if (!speaker) return;
@@ -646,27 +685,29 @@
             const modal = document.getElementById('modal');
             const modalPhoto = document.getElementById('modalPhoto');
             const modalName = document.getElementById('modalName');
+            const modalNameEn = document.getElementById('modalNameEn');
             const modalTopics = document.getElementById('modalTopics');
             
             modalPhoto.innerHTML = speaker.photo ? `<img src="${speaker.photo}" alt="${speaker.name}" onerror="this.parentElement.innerHTML='📷'">` : '📷';
             modalName.textContent = speaker.name;
+            modalNameEn.textContent = speaker.nameEn || '';
+            modalNameEn.style.display = speaker.nameEn ? 'block' : 'none';
+            
             modalTopics.innerHTML = `
                 <div class="modal-topics-label">可演講主題</div>
-                ${speaker.topics.map(topic => `<div class="modal-topic">${topic}</div>`).join('')}
+                ${speaker.topics.map(topic => `<div class="modal-topic">${formatTopic(topic)}</div>`).join('')}
             `;
             
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
 
-        // 關閉彈出視窗
         function closeModal() {
             const modal = document.getElementById('modal');
             modal.style.display = 'none';
             document.body.style.overflow = 'auto';
         }
 
-        // 事件監聽器
         document.getElementById('searchInput').addEventListener('input', (e) => {
             filterSpeakers(e.target.value);
         });
@@ -685,9 +726,8 @@
             }
         });
 
-        // 頁面載入完成後自動載入講師資料
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('頁面載入完成，開始載入講師資料');
+            console.log('頁面載入完成,開始載入講師資料');
             loadSpeakers();
         });
     </script>
