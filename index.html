@@ -588,11 +588,12 @@
                     throw new Error('JSON 資料格式不正確');
                 }
 
-                speakers = data.speakers;
+                // 隨機打亂講師順序
+                speakers = shuffleArray(data.speakers);
                 filteredSpeakers = [...speakers];
                 lastUpdated = data.lastUpdated || '';
 
-                console.log(`成功載入 ${speakers.length} 位講師`);
+                console.log(`成功載入 ${speakers.length} 位講師(已隨機排序)`);
 
                 statusInfo.style.display = 'none';
                 searchInput.disabled = false;
