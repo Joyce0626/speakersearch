@@ -163,8 +163,29 @@
             font-size: 1rem;
             color: #666;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-style: italic;
+        }
+
+        .speaker-details {
+            font-size: 0.85rem;
+            color: #555;
+            text-align: center;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            padding: 0 10px;
+        }
+
+        .speaker-details-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 4px;
+        }
+
+        .speaker-details-icon {
+            font-size: 0.9rem;
         }
 
         .topics-label {
@@ -336,8 +357,29 @@
             font-size: 1.2rem;
             color: #666;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             font-style: italic;
+        }
+
+        .modal-details {
+            font-size: 0.95rem;
+            color: #555;
+            text-align: center;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .modal-details-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .modal-details-icon {
+            font-size: 1rem;
         }
 
         .modal-topics-label {
@@ -639,6 +681,12 @@
                     <div class="speaker-info">
                         <div class="speaker-name">${speaker.name}</div>
                         ${speaker.nameEn ? `<div class="speaker-name-en">${speaker.nameEn}</div>` : ''}
+                        <div class="speaker-details">
+                            ${speaker.region ? `<div class="speaker-details-item"><span class="speaker-details-icon">📍</span><span>${speaker.region}</span></div>` : ''}
+                            ${speaker.club ? `<div class="speaker-details-item"><span class="speaker-details-icon">🏛️</span><span>${speaker.club}</span></div>` : ''}
+                            ${speaker.phone ? `<div class="speaker-details-item"><span class="speaker-details-icon">📞</span><span>${speaker.phone}</span></div>` : ''}
+                            ${speaker.email ? `<div class="speaker-details-item"><span class="speaker-details-icon">✉️</span><span>${speaker.email}</span></div>` : ''}
+                        </div>
                         <div class="topics-label">可演講主題</div>
                         <div class="topics">
                             ${speaker.topics.map(topic => `<div class="topic">${formatTopic(topic)}</div>`).join('')}
@@ -704,7 +752,15 @@
             modalNameEn.textContent = speaker.nameEn || '';
             modalNameEn.style.display = speaker.nameEn ? 'block' : 'none';
             
-            modalTopics.innerHTML = `
+            // 建立詳細資訊區塊
+            let detailsHTML = '<div class="modal-details">';
+            if (speaker.region) detailsHTML += `<div class="modal-details-item"><span class="modal-details-icon">📍</span><span>${speaker.region}</span></div>`;
+            if (speaker.club) detailsHTML += `<div class="modal-details-item"><span class="modal-details-icon">🏛️</span><span>${speaker.club}</span></div>`;
+            if (speaker.phone) detailsHTML += `<div class="modal-details-item"><span class="modal-details-icon">📞</span><span>${speaker.phone}</span></div>`;
+            if (speaker.email) detailsHTML += `<div class="modal-details-item"><span class="modal-details-icon">✉️</span><span>${speaker.email}</span></div>`;
+            detailsHTML += '</div>';
+            
+            modalTopics.innerHTML = detailsHTML + `
                 <div class="modal-topics-label">可演講主題</div>
                 ${speaker.topics.map(topic => `<div class="modal-topic">${formatTopic(topic)}</div>`).join('')}
             `;
