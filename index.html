@@ -524,6 +524,16 @@
 
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwfOKEokqDLf6cWsi1ZvczRrdL9OWqr3xjgezD_itgG1sVAl8keLoPKt_yhUdC5b3I8/exec';
 
+        // Fisher-Yates 隨機排序演算法
+        function shuffleArray(array) {
+            const shuffled = [...array]; // 建立副本
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
         // 解析演講主題分類格式 "T：教育與成長" -> {code: "T", name: "教育與成長"}
         function parseCategory(categoryStr) {
             if (!categoryStr) return { code: '', name: '' };
